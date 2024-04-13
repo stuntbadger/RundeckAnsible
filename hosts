@@ -1,0 +1,29 @@
+[rundeck]
+192.168.64.9 ansible_user=root
+
+
+[docker]
+192.168.1.233 ansible_user=root
+
+[yum]
+docker.local ansible_user=root
+vpn.local ansible_user=root
+plex.local ansible_user=root
+newplex.local ansible_user=root
+jenkins.local ansible_user=root
+
+[apt:vars]
+ansible_user=stuntbadger
+ansible_become=yes
+ansible_become_method=sudo
+ansible_sudo_pass='{{ ubuntu_sudo_user }}'
+
+[apt]
+navidrome.local
+nginx-ubuntu.local 
+
+[camera]
+Mailbox.local ansible_user=root ansible_remote_tmp=/home/ftp/sdcard
+car.local ansible_user=root ansible_remote_tmp=/home/ftp/sdcard
+carlong.local ansible_user=root ansible_remote_tmp=/home/ftp/sdcard
+ircamera.local ansible_user=root ansible_remote_tmp=/home/ftp/sdcard

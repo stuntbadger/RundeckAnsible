@@ -1,0 +1,85 @@
+---
+- hosts: rundeck
+  gather_facts: true
+  vars:
+    mysql_root_password: "MySQLPassword123"
+    servername: 192.168.64.9
+  tasks:
+    - name: install openjdk 11
+      dnf:
+        name: java-11-openjdk
+        state: present
+    - name: install mariadb
+      dnf:
+        name: 
+          - mariadb-server
+          - python3-PyMySQL
+        state: present
+
+    - name: Start MariaDB 
+      service:  
+        name: mariadb
+        state: started     
+        enabled: yes
+
+    - name: Create .my.cnf
+      template:
+        src: "client.my.cnf"
+        dest: "/root/.my.cnf"
+        owner: root
+        group: root
+        mode: 0600
+
+    - name: update mysql root password for root account
+      mysql_user:
+        name: root
+        login_unix_socket: /var/lib/mysql/mysql.sock
+        host: 'localhost'
+        password: '{{ mysql_root_password }}'
+        priv: "*.*:ALL,GRANT"
+        check_implicit_admin: true
+
+    - name: Create a new database with name 'Rundeck'
+      mysql_db:
+        name: rundeckdb
+        state: present
+    
+    - name: Create rundeck admin wtih access to rundeckdb
+      mysql_user:
+        login_user: root
+        login_password: '{{ mysql_root_password }}'
+        login_unix_socket: /var/lib/mysql/mysql.sock
+        name: rundeckadmin
+        password: 'Password123'
+        host: 'localhost'
+        state: present
+        priv: "rundeckdb.*:ALL,GRANT"
+        check_implicit_admin: true
+    
+    - name: copying rundeck repo 
+      copy:
+        src: rundeck.repo.txt
+        dest: /etc/yum.repos.d/rundeck.repo
+        owner: root
+        group: root
+        mode: 0644
+    - name: install rundeck
+      dnf:
+        name: rundeck
+        state: present
+    - replace:
+       path: /etc/rundeck/framework.properties
+       regexp: 'localhost'
+       replace: '{{ servername }}'
+       backup: yes
+    - replace:
+       path: /etc/rundeck/rundeck-config.properties
+       regexp: 'localhost'
+       replace: '{{ servername }}'
+       backup: yes
+    - name: Start rundeck 
+      service:  
+        name: rundeckd
+        state: started     
+        enabled: yes
+    
