@@ -2,7 +2,7 @@
 - hosts: rundeck
   gather_facts: true
   vars:
-    mysql_root_password: "MySQLPassword123"
+    mysql_root_password: "Password123"
     servername: 192.168.64.9
   tasks:
     - name: install openjdk 11
@@ -77,6 +77,20 @@
        regexp: 'localhost'
        replace: '{{ servername }}'
        backup: yes
+    - name: Remove lines in config file where dataSource is present
+      replace:
+       path: /etc/rundeck/rundeck-config.properties
+       regexp: '^.*dataSource.*$'
+       replace: ''
+    - name: Set rundeck-config to use the database
+      lineinfile:
+        insertafter: grails.plugin.databasemigration.updateOnStart\\=true
+        line: |
+            dataSource.driverClassName = org.mariadb.jdbc.Driver
+            dataSource.url = jdbc:mysql://localhost/rundeckdb?autoReconnect=true&useSSL=false
+            dataSource.username = rundeckadmin
+            dataSource.password = Password123
+        path: /etc/rundeck/rundeck-config.properties
     - name: Start rundeck 
       service:  
         name: rundeckd
